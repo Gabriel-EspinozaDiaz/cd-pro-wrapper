@@ -38,6 +38,7 @@ class PipelineWorker(QThread):
         output_dir: str,
         conversion: ConversionStage,
         cdpro: CDProRunner,
+        input_format: str = "",
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -46,6 +47,7 @@ class PipelineWorker(QThread):
         self._output_dir = output_dir
         self._conversion = conversion
         self._cdpro = cdpro
+        self._input_format = input_format
         self._cancel_event = threading.Event()
 
     def cancel(self) -> None:
@@ -71,6 +73,7 @@ class PipelineWorker(QThread):
                     input_path=path,
                     file_type=self._file_type,
                     output_dir=self._output_dir,
+                    input_format=self._input_format,
                 )
                 self.progress.emit(f"  Stage 1 done → {converted_path}", int((idx + 0.5) / total * 100))
             except Exception as exc:

@@ -16,6 +16,24 @@ from pathlib import Path
 
 from config.file_types import FileTypeConfig
 
+from dataclasses import dataclass
+
+
+@dataclass
+class InputFormat:
+    name: str
+    description: str
+
+
+# Registry of supported input formats.
+# Each key maps to a method named process_<key> on ConversionStage.
+# Add an entry here and a matching method below to support a new format.
+INPUT_FORMATS: dict[str, InputFormat] = {
+    "type1": InputFormat(name="Type 1", description="Placeholder format type 1"),
+    "type2": InputFormat(name="Type 2", description="Placeholder format type 2"),
+    "type3": InputFormat(name="Type 3", description="Placeholder format type 3"),
+}
+
 # Maps file extensions to a format label.
 # Add or modify entries here as you support more formats.
 EXTENSION_TYPE_MAP: dict[str, str] = {
@@ -72,32 +90,50 @@ class ConversionStage:
         input_path: str,
         file_type: FileTypeConfig,
         output_dir: str,
+        input_format: str = "",
     ) -> str:
         """
         Convert / transform input_path before it is handed to CD Pro.
 
-        Args:
-            input_path:  Absolute path to the source file.
-            file_type:   The FileTypeConfig for the currently selected type.
-            output_dir:  The user-chosen output directory.
+        Dispatches to process_<input_format>() to produce a CSV, then
+        passes the result to process_csv().
 
-        Returns:
-            Absolute path to the file CD Pro should process.
+        Args:
+            input_path:    Absolute path to the source file.
+            file_type:     The FileTypeConfig for the currently selected type.
+            output_dir:    The user-chosen output directory.
+            input_format:  Key from INPUT_FORMATS (e.g. "type1").
         """
         self.read_text(input_path)
 
-        if self.detected_type == "csv":
-            return self.process_csv(input_path)
+        dispatch = {
+            "type1": self.process_type1,
+            "type2": self.process_type2,
+            "type3": self.process_type3,
+        }
 
-        # ----------------------------------------------------------------
-        # TODO: Transform self.content here, then write the result to a
-        # new file and return its path. Example:
-        #
-        #   transformed = self.content.upper()  # your logic here
-        #   dest = Path(output_dir) / Path(input_path).name
-        #   dest.write_text(transformed, encoding="utf-8")
-        #   return str(dest)
-        # ----------------------------------------------------------------
+        if input_format in dispatch:
+            csv_path = dispatch[input_format](input_path, output_dir)
+            return self.process_csv(csv_path)
+
+        # Fallback: treat input as CSV directly
+        return self.process_csv(input_path)
+
+    # ------------------------------------------------------------------
+    # Input format converters — each receives the raw input file and
+    # must return an absolute path to a CSV file for process_csv().
+    # ------------------------------------------------------------------
+
+    def process_type1(self, input_path: str, output_dir: str) -> str:
+        # TODO: convert input_path to CSV and return the new path
+        return input_path
+
+    def process_type2(self, input_path: str, output_dir: str) -> str:
+        # TODO: convert input_path to CSV and return the new path
+        return input_path
+
+    def process_type3(self, input_path: str, output_dir: str) -> str:
+        # TODO: convert input_path to CSV and return the new path
         return input_path
 
     def process_csv(self, input_path: str) -> str:

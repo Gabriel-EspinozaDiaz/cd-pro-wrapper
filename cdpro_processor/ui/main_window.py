@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from config.file_types import FILE_TYPES
+from pipeline.conversion import INPUT_FORMATS
 from core.settings import AppSettings
 from pipeline.cdpro_runner import CDProRunner
 from pipeline.conversion import ConversionStage
@@ -57,6 +58,18 @@ class MainWindow(QMainWindow):
             )
         type_row.addWidget(self._type_combo, stretch=1)
         root.addLayout(type_row)
+
+        # Input format selector
+        format_row = QHBoxLayout()
+        format_row.addWidget(QLabel("Input format:"))
+        self._format_combo = QComboBox()
+        for key, fmt in INPUT_FORMATS.items():
+            self._format_combo.addItem(fmt.name, userData=key)
+            self._format_combo.setItemData(
+                self._format_combo.count() - 1, fmt.description, Qt.ItemDataRole.ToolTipRole
+            )
+        format_row.addWidget(self._format_combo, stretch=1)
+        root.addLayout(format_row)
 
         # Drop zone
         self._drop_zone = DropZoneWidget()
@@ -192,6 +205,7 @@ class MainWindow(QMainWindow):
             output_dir=output_dir,
             conversion=conversion,
             cdpro=cdpro,
+            input_format=self._format_combo.currentData(),
         )
         self._worker.progress.connect(self._on_worker_progress)
         self._worker.file_done.connect(self._on_file_done)
