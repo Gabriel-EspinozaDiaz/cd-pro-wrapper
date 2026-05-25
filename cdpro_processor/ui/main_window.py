@@ -71,16 +71,27 @@ class MainWindow(QMainWindow):
         format_row.addWidget(self._format_combo, stretch=1)
         root.addLayout(format_row)
 
-        # Drop zone
-        self._drop_zone = DropZoneWidget()
-        root.addWidget(self._drop_zone)
+        # Two drop zones side by side: Background | Data
+        panels_row = QHBoxLayout()
+        panels_row.setSpacing(8)
 
-        # File list
-        file_list_box = QGroupBox("Queued files")
-        fl_layout = QVBoxLayout(file_list_box)
-        self._file_list = FileListWidget()
-        fl_layout.addWidget(self._file_list)
-        root.addWidget(file_list_box)
+        bg_box = QGroupBox("Background")
+        bg_layout = QVBoxLayout(bg_box)
+        self._bg_drop_zone = DropZoneWidget(title="Background")
+        self._bg_file_list = FileListWidget()
+        bg_layout.addWidget(self._bg_drop_zone)
+        bg_layout.addWidget(self._bg_file_list)
+        panels_row.addWidget(bg_box)
+
+        data_box = QGroupBox("Data")
+        data_layout = QVBoxLayout(data_box)
+        self._data_drop_zone = DropZoneWidget(title="Data")
+        self._data_file_list = FileListWidget()
+        data_layout.addWidget(self._data_drop_zone)
+        data_layout.addWidget(self._data_file_list)
+        panels_row.addWidget(data_box)
+
+        root.addLayout(panels_row)
 
         # Output folder
         output_box = QGroupBox("Output folder")
@@ -130,9 +141,11 @@ class MainWindow(QMainWindow):
 
     # --------------------------------------------------------- connect signals
     def _connect_signals(self) -> None:
-        self._drop_zone.files_dropped.connect(self._file_list.add_files)
+        self._bg_drop_zone.files_dropped.connect(self._bg_file_list.add_files)
+        self._data_drop_zone.files_dropped.connect(self._data_file_list.add_files)
         self._type_combo.currentIndexChanged.connect(self._on_file_type_changed)
-        self._file_list.list_changed.connect(self._on_list_changed)
+        self._bg_file_list.list_changed.connect(self._on_list_changed)
+        self._data_file_list.list_changed.connect(self._on_list_changed)
         self._run_btn.clicked.connect(self._on_run_clicked)
         self._cancel_btn.clicked.connect(self._on_cancel_clicked)
 
@@ -154,11 +167,12 @@ class MainWindow(QMainWindow):
         key = self._type_combo.itemData(index)
         cfg = FILE_TYPES.get(key)
         if cfg:
-            self._drop_zone.set_accepted_extensions(cfg.extensions)
+            self._bg_drop_zone.set_accepted_extensions(cfg.extensions)
+            self._data_drop_zone.set_accepted_extensions(cfg.extensions)
             self._settings.last_file_type = key
 
-    def _on_list_changed(self, paths: list) -> None:
-        has_files = bool(paths)
+    def _on_list_changed(self, _paths: list) -> None:
+        has_files = bool(self._bg_file_list.get_files() or self._data_file_list.get_files())
         has_output = bool(self._output_edit.text().strip())
         self._run_btn.setEnabled(has_files and has_output)
 
@@ -172,8 +186,9 @@ class MainWindow(QMainWindow):
             self._on_list_changed(self._file_list.get_files())
 
     def _on_run_clicked(self) -> None:
-        files = self._file_list.get_files()
-        if not files:
+        background_files = self._bg_file_list.get_files()
+        data_files = self._data_file_list.get_files()
+        if not background_files and not data_files:
             return
 
         output_dir = self._output_edit.text().strip()
@@ -200,7 +215,8 @@ class MainWindow(QMainWindow):
         conversion = ConversionStage()
 
         self._worker = PipelineWorker(
-            files=files,
+            background_files=background_files,
+            data_files=data_files,
             file_type=file_type,
             output_dir=output_dir,
             conversion=conversion,
@@ -231,7 +247,8 @@ class MainWindow(QMainWindow):
         self._file_list.set_file_status(path, status)
 
     def _on_worker_finished(self, success: bool, errors: list) -> None:
-        self._run_btn.setEnabled(bool(self._file_list.get_files()))
+        has_files = bool(self._bg_file_list.get_files() or self._data_file_list.get_files())
+        self._run_btn.setEnabled(has_files)
         self._cancel_btn.setEnabled(False)
         self._progress.setValue(100 if success else self._progress.value())
 

@@ -8,8 +8,9 @@ class DropZoneWidget(QWidget):
 
     files_dropped = pyqtSignal(list)  # list[str] — absolute file paths
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, title: str = "", parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._title = title
         self._accepted_extensions: list[str] = []
         self._hovering = False
         self.setAcceptDrops(True)
@@ -62,6 +63,17 @@ class DropZoneWidget(QWidget):
         painter.drawRoundedRect(self.rect().adjusted(4, 4, -4, -4), 8, 8)
 
         painter.setPen(QColor("#666666"))
+        if self._title:
+            title_rect = self.rect().adjusted(0, 8, 0, 0)
+            title_font = painter.font()
+            title_font.setBold(True)
+            title_font.setPointSize(title_font.pointSize() + 1)
+            painter.setFont(title_font)
+            painter.drawText(title_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, self._title)
+            title_font.setBold(False)
+            title_font.setPointSize(title_font.pointSize() - 1)
+            painter.setFont(title_font)
+
         if self._accepted_extensions:
             exts = ", ".join(self._accepted_extensions)
             label = f"Drop files here\n({exts})"

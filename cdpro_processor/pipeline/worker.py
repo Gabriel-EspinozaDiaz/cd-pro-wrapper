@@ -33,7 +33,8 @@ class PipelineWorker(QThread):
 
     def __init__(
         self,
-        files: list[str],
+        background_files: list[str],
+        data_files: list[str],
         file_type: FileTypeConfig,
         output_dir: str,
         conversion: ConversionStage,
@@ -42,7 +43,8 @@ class PipelineWorker(QThread):
         parent=None,
     ) -> None:
         super().__init__(parent)
-        self._files = files
+        self._background_files = background_files
+        self._data_files = data_files
         self._file_type = file_type
         self._output_dir = output_dir
         self._conversion = conversion
@@ -56,9 +58,10 @@ class PipelineWorker(QThread):
 
     def run(self) -> None:
         errors: list[str] = []
-        total = len(self._files)
+        all_files = self._background_files + self._data_files
+        total = len(all_files)
 
-        for idx, path in enumerate(self._files):
+        for idx, path in enumerate(all_files):
             if self._cancel_event.is_set():
                 self.progress.emit("Cancelled.", int(idx / total * 100))
                 break
