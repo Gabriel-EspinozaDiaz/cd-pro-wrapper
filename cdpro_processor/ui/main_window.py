@@ -75,13 +75,13 @@ class MainWindow(QMainWindow):
         panels_row = QHBoxLayout()
         panels_row.setSpacing(8)
 
-        bg_box = QGroupBox("Background")
-        bg_layout = QVBoxLayout(bg_box)
+        self._bg_box = QGroupBox("Background")
+        bg_layout = QVBoxLayout(self._bg_box)
         self._bg_drop_zone = DropZoneWidget(title="Background")
         self._bg_file_list = FileListWidget()
         bg_layout.addWidget(self._bg_drop_zone)
         bg_layout.addWidget(self._bg_file_list)
-        panels_row.addWidget(bg_box)
+        panels_row.addWidget(self._bg_box)
 
         data_box = QGroupBox("Data")
         data_layout = QVBoxLayout(data_box)
@@ -144,6 +144,7 @@ class MainWindow(QMainWindow):
         self._bg_drop_zone.files_dropped.connect(self._bg_file_list.add_files)
         self._data_drop_zone.files_dropped.connect(self._data_file_list.add_files)
         self._type_combo.currentIndexChanged.connect(self._on_file_type_changed)
+        self._format_combo.currentIndexChanged.connect(self._on_input_format_changed)
         self._bg_file_list.list_changed.connect(self._on_list_changed)
         self._data_file_list.list_changed.connect(self._on_list_changed)
         self._run_btn.clicked.connect(self._on_run_clicked)
@@ -161,8 +162,17 @@ class MainWindow(QMainWindow):
                     break
 
         self._on_file_type_changed(self._type_combo.currentIndex())
+        self._on_input_format_changed(self._format_combo.currentIndex())
 
     # ----------------------------------------------------------------- slots
+    def _on_input_format_changed(self, index: int) -> None:
+        key = self._format_combo.itemData(index)
+        fmt = INPUT_FORMATS.get(key)
+        if fmt:
+            self._bg_box.setEnabled(fmt.requires_background)
+            if not fmt.requires_background:
+                self._bg_file_list.clear()
+
     def _on_file_type_changed(self, index: int) -> None:
         key = self._type_combo.itemData(index)
         cfg = FILE_TYPES.get(key)
@@ -183,7 +193,7 @@ class MainWindow(QMainWindow):
         if folder:
             self._output_edit.setText(folder)
             self._settings.last_output_dir = folder
-            self._on_list_changed(self._file_list.get_files())
+            self._on_list_changed([])
 
     def _on_run_clicked(self) -> None:
         background_files = self._bg_file_list.get_files()

@@ -23,15 +23,18 @@ from dataclasses import dataclass
 class InputFormat:
     name: str
     description: str
+    requires_background: bool = True  # set False to grey out the Background panel
 
 
 # Registry of supported input formats.
 # Each key maps to a method named process_<key> on ConversionStage.
 # Add an entry here and a matching method below to support a new format.
+# To disable the Background panel for a format, set requires_background=False.
 INPUT_FORMATS: dict[str, InputFormat] = {
     "type1": InputFormat(name="Type 1", description="Placeholder format type 1"),
     "type2": InputFormat(name="Type 2", description="Placeholder format type 2"),
-    "type3": InputFormat(name="Type 3", description="Placeholder format type 3"),
+    "type3": InputFormat(name="Type 3", description="Placeholder format type 3",
+                         requires_background=False),
 }
 
 # Maps file extensions to a format label.

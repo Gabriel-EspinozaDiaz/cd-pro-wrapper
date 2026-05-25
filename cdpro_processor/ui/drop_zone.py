@@ -53,7 +53,8 @@ class DropZoneWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        bg_color = QColor("#e8f4fd") if self._hovering else QColor("#f5f5f5")
+        text_color = QColor("#666666")
+        bg_color = text_color if not self.isEnabled() else (QColor("#e8f4fd") if self._hovering else QColor("#f5f5f5"))
         border_color = QColor("#2196F3") if self._hovering else QColor("#aaaaaa")
 
         painter.fillRect(self.rect(), bg_color)
@@ -62,7 +63,7 @@ class DropZoneWidget(QWidget):
         painter.setPen(pen)
         painter.drawRoundedRect(self.rect().adjusted(4, 4, -4, -4), 8, 8)
 
-        painter.setPen(QColor("#666666"))
+        painter.setPen(text_color)
         if self._title:
             title_rect = self.rect().adjusted(0, 8, 0, 0)
             title_font = painter.font()
