@@ -127,6 +127,30 @@ class ConversionStage:
     # must return an absolute path to a CSV file for process_csv().
     # ------------------------------------------------------------------
 
+    def merge_background(
+        self,
+        data: list[list[str]],
+        background: list[list[str]],
+    ) -> list[list[str]]:
+        """Subtract background signal from data point-by-point (data - background).
+
+        Both inputs are two-column rows: [[x, signal], ...].
+        Column 0 (e.g. wavelength) is taken from data; only column 1 is subtracted.
+        Returns a new two-column list with the corrected signal values.
+        Raises ValueError if the two lists have different lengths.
+        """
+        if len(data) != len(background):
+            raise ValueError(
+                f"data ({len(data)} rows) and background ({len(background)} rows) must be the same length"
+            )
+
+        result = []
+        for data_row, bg_row in zip(data, background):
+            x = data_row[0]
+            corrected = float(data_row[1]) - float(bg_row[1])
+            result.append([x, str(corrected)])
+        return result
+
     def process_type1(self, input_path: str, output_dir: str) -> str:
         # TODO: convert input_path to CSV and return the new path
         return input_path
